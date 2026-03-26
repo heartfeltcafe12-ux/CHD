@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Web of Causation — CHD</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  :root {
+    --bg: #FAFAFA;
+    --text: #2C2C2C;
+    --subtle: #8A8A8A;
+    --border: #E8E8E8;
+    --accent: #1A56DB;
+  }
+ 
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 1.2s ease;
+    overflow-x: hidden;
+  }
+ 
+  /* ── LOVE MODE BODY ── */
+  body.love {
+    background: linear-gradient(160deg, #FFF0F5 0%, #FFE4EC 40%, #FFF5F8 100%);
+  }
+ 
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    padding: 28px 40px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    transition: border-color 1s ease;
+  }
+  body.love header { border-color: #FFB6C8; }
+ 
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .badge {
+    font-size: 0.72rem;
+    color: var(--subtle);
+    background: var(--border);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: all 1s ease;
+  }
+  body.love .badge {
+    background: #FFD6E3;
+    color: #C2185B;
+  }
+ 
+  /* ── MAIN ── */
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 820px;
+    padding: 48px 24px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+ 
+  .page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.2;
+    transition: color 1s ease;
+  }
+  body.love .page-title { color: #C2185B; }
+ 
+  .page-sub {
+    font-size: 0.88rem;
+    color: var(--subtle);
+    text-align: center;
+    letter-spacing: 0.03em;
+    transition: color 1s ease;
+  }
+  body.love .page-sub { color: #E91E8C; }
+ 
+  /* ── DIAGRAM CARD ── */
+  .diagram-wrap {
+    margin-top: 20px;
+    position: relative;
+    cursor: pointer;
+  }
+ 
+  .click-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--subtle);
+    margin-bottom: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: opacity 0.6s ease;
+  }
+  body.love .click-hint { opacity: 0; }
+ 
+  .diagram-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    transition: all 1s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  body.love .diagram-card {
+    border-color: #FFB6C8;
+    box-shadow: 0 8px 48px rgba(236, 64, 122, 0.15);
+    background: #FFFAFC;
+  }
+ 
+  .diagram-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 28px;
+    transition: color 1s ease;
+  }
+  body.love .diagram-title { color: #AD1457; }
+ 
+  /* ── SVG DIAGRAM ── */
+  svg.web-diagram {
+    display: block;
+    margin: 0 auto;
+  }
+ 
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--subtle);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+ 
+  /* ── LOVE MESSAGE ── */
+  .love-message {
+  position: fixed;
+  top: 38%; /* 👈 thoda upar shift */
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+  z-index: 999;
+  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+  .love-message.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .love-text {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  color: #000000; /* 🖤 pure black */
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); /* soft shadow for depth */
+}
+
+.love-text em {
+  color: #000000; /* 🖤 same black for "Begum" */
+}
+  .love-sub {
+    font-size: 0.95rem;
+    color: #E91E63;
+    margin-top: 10px;
+    opacity: 0.8;
+    letter-spacing: 0.08em;
+  }
+ 
+  /* ── PETAL CANVAS ── */
+  #petal-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  #petal-canvas.active { opacity: 1; }
+ 
+  /* ── INFO CARDS ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    width: 100%;
+    margin-top: 12px;
+  }
+  .info-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    transition: all 1s ease;
+  }
+  body.love .info-card {
+    border-color: #FFCCD9;
+    background: #FFFBFC;
+  }
+  .info-card-icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+  .info-card-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+    transition: color 1s ease;
+  }
+  body.love .info-card-title { color: #AD1457; }
+  .info-card-text {
+    font-size: 0.78rem;
+    color: var(--subtle);
+    line-height: 1.5;
+  }
+ 
+  /* ── FOOTER ── */
+  footer {
+    padding: 20px;
+    font-size: 0.75rem;
+    color: var(--subtle);
+    text-align: center;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    transition: all 1s ease;
+  }
+  body.love footer {
+    border-color: #FFB6C8;
+    color: #E91E63;
+  }
+</style>
+</head>
+<body>
+ 
+<canvas id="petal-canvas"></canvas>
+ 
+<div class="love-message" id="loveMsg">
+  <div class="love-text">I Love You,<br/><em>Begum</em> 🌹</div>
+  <div class="love-sub">— Always & Forever —</div>
+</div>
+ 
+<header>
+  <div class="logo">Web of Causation</div>
+  <div class="badge">BMLT · Community Medicine</div>
+</header>
+ 
+<main>
+  <h1 class="page-title">Web of Causation<br/>Coronary Heart Disease</h1>
+  <p class="page-sub">MacMahon & Pugh, 1970 · Click the diagram</p>
+ 
+  <div class="diagram-wrap" id="diagramWrap">
+    <p class="click-hint">✦ Click diagram to interact ✦</p>
+    <div class="diagram-card" id="diagramCard">
+      <div class="diagram-title">CHD — Multi-factor Causal Network</div>
+ 
+      <svg class="web-diagram" width="500" height="460" viewBox="0 0 500 460">
+        <defs>
+          <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#94A3B8"/>
+          </marker>
+          <marker id="arrow-red" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#E53935"/>
+          </marker>
+          <filter id="soft-shadow">
+            <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000018"/>
+          </filter>
+          <!-- Petal gradient -->
+          <radialGradient id="center-grad" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#FF5252"/>
+            <stop offset="100%" stop-color="#B71C1C"/>
+          </radialGradient>
+        </defs>
+ 
+        <!-- Web connecting lines -->
+        <g id="web-lines" stroke="#E2E8F0" stroke-width="1" fill="none">
+          <!-- Between all outer nodes -->
+          <line x1="250" y1="100" x2="390" y2="165"/>
+          <line x1="250" y1="100" x2="420" y2="280"/>
+          <line x1="250" y1="100" x2="360" y2="390"/>
+          <line x1="250" y1="100" x2="140" y2="390"/>
+          <line x1="250" y1="100" x2="80"  y2="280"/>
+          <line x1="250" y1="100" x2="110" y2="165"/>
+          <line x1="110" y1="165" x2="390" y2="165"/>
+          <line x1="110" y1="165" x2="420" y2="280"/>
+          <line x1="390" y1="165" x2="420" y2="280"/>
+          <line x1="420" y1="280" x2="360" y2="390"/>
+          <line x1="360" y1="390" x2="140" y2="390"/>
+          <line x1="140" y1="390" x2="80"  y2="280"/>
+          <line x1="80"  y1="280" x2="110" y2="165"/>
+          <!-- Cross lines -->
+          <line x1="110" y1="165" x2="360" y2="390"/>
+          <line x1="390" y1="165" x2="140" y2="390"/>
+          <line x1="80"  y1="280" x2="420" y2="280"/>
+          <line x1="250" y1="100" x2="250" y2="430" opacity="0.4"/>
+        </g>
+ 
+        <!-- Spokes to center (arrows) -->
+        <g id="spokes" stroke="#CBD5E1" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+          <line x1="250" y1="122" x2="250" y2="191"/>
+          <line x1="372" y1="174" x2="301" y2="212"/>
+          <line x1="399" y1="280" x2="316" y2="248"/>
+          <line x1="343" y1="374" x2="293" y2="296"/>
+          <line x1="157" y1="374" x2="207" y2="296"/>
+          <line x1="101" y1="280" x2="184" y2="248"/>
+          <line x1="128" y1="174" x2="199" y2="212"/>
+        </g>
+ 
+        <!-- Outer nodes -->
+        <!-- Top: Hypertension -->
+        <g filter="url(#soft-shadow)" class="node" data-label="hyp">
+          <rect x="195" y="68" width="110" height="46" rx="10" fill="#FFF" stroke="#EF9A9A" stroke-width="1.8"/>
+          <text x="250" y="87" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#C62828">Hypertension</text>
+          <text x="250" y="103" text-anchor="middle" font-family="DM Sans" font-size="9.5" fill="#E57373">High Blood Pressure</text>
+        </g>
+ 
+        <!-- Top Right: High Cholesterol -->
+        <g filter="url(#soft-shadow)">
+          <rect x="335" y="140" width="110" height="46" rx="10" fill="#FFF" stroke="#EF9A9A" stroke-width="1.8"/>
+          <text x="390" y="159" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#C62828">High LDL</text>
+          <text x="390" y="175" text-anchor="middle" font-family="DM Sans" font-size="9.5" fill="#E57373">Cholesterol</text>
+        </g>
+ 
+        <!-- Right: Diabetes -->
+        <g filter="url(#soft-shadow)">
+          <rect x="364" y="254" width="110" height="46" rx="10" fill="#FFF" stroke="#FFCC80" stroke-width="1.8"/>
+          <text x="419" y="273" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#E65100">Diabetes</text>
+          <text x="419" y="289" text-anchor="middle" font-family="DM Sans" font-size="9.5" fill="#FFA726">Mellitus</text>
+        </g>
+ 
+        <!-- Bottom Right: Smoking -->
+        <g filter="url(#soft-shadow)">
+          <rect x="300" y="360" width="110" height="46" rx="10" fill="#FFF" stroke="#A5D6A7" stroke-width="1.8"/>
+          <text x="355" y="379" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#2E7D32">Smoking</text>
+          <text x="355" y="395" text-anchor="middle" font-family="DM Sans" font-size="9.5" fill="#66BB6A">& Alcohol</text>
+        </g>
+ 
+        <!-- Bottom Left: Obesity -->
+        <g filter="url(#soft-shadow)">
+          <rect x="88" y="360" width="110" height="46" rx="10" fill="#FFF" stroke="#F48FB1" stroke-width="1.8"/>
+          <text x="143" y="379" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#AD1457">Obesity</text>
+          <text x="143" y="395" text-anchor="middle" font-family="DM Sans" font-size="9.5" fill="#EC407A">BMI &gt; 30</text>
+        </g>
+ 
+        <!-- Left: Stress -->
+        <g filter="url(#soft-shadow)">
+          <rect x="26" y="254" width="110" height="46" rx="10" fill="#FFF" stroke="#CE93D8" stroke-width="1.8"/>
+          <text x="81" y="273" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#6A1B9A">Stress</text>
+          <text x="81" y="289" text-anchor="middle" font-family="DM Sans" font-size="9.5" fill="#AB47BC">& Anxiety</text>
+        </g>
+ 
+        <!-- Top Left: Genetics -->
+        <g filter="url(#soft-shadow)">
+          <rect x="56" y="140" width="110" height="46" rx="10" fill="#FFF" stroke="#90CAF9" stroke-width="1.8"/>
+          <text x="111" y="159" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#1565C0">Genetics</text>
+          <text x="111" y="175" text-anchor="middle" font-family="DM Sans" font-size="9.5" fill="#42A5F5">Age &amp; Family</text>
+        </g>
+ 
+        <!-- CENTER: CHD -->
+        <g filter="url(#soft-shadow)" id="center-node" style="cursor:pointer">
+          <!-- Glow -->
+          <circle cx="250" cy="228" r="54" fill="#FFEBEE" opacity="0.7"/>
+          <circle cx="250" cy="228" r="46" fill="url(#center-grad)" stroke="white" stroke-width="3"/>
+          <text x="250" y="222" text-anchor="middle" font-family="DM Serif Display" font-size="18" fill="white" font-weight="bold">CHD</text>
+          <text x="250" y="242" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#FFCDD2">Coronary Heart</text>
+          <text x="250" y="255" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#FFCDD2">Disease</text>
+        </g>
+      </svg>
+ 
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#EF9A9A;"></div> Physiological</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FFCC80;"></div> Metabolic</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#A5D6A7;"></div> Lifestyle</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#F48FB1;"></div> Behavioral</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#CE93D8;"></div> Psychological</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#90CAF9;"></div> Non-modifiable</div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Info Cards -->
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-card-icon">🕸️</div>
+      <div class="info-card-title">What is the Web?</div>
+      <div class="info-card-text">Multiple factors interact like a web to cause disease. No single cause alone is responsible.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon">🔗</div>
+      <div class="info-card-title">Interconnected Factors</div>
+      <div class="info-card-text">Lines between nodes show how risk factors affect each other — not just the disease.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon">🎯</div>
+      <div class="info-card-title">Prevention Strategy</div>
+      <div class="info-card-text">To prevent CHD, multiple risk factors must be addressed simultaneously.</div>
+    </div>
+  </div>
+</main>
+ 
+<footer>
+  BMLT · Community Medicine & Epidemiology · MacMahon & Pugh (1970) · Made by Rafe
+</footer>
+ 
+<script>
+// ══════════════════════════════════════════
+// PETAL ANIMATION
+// ══════════════════════════════════════════
+const canvas = document.getElementById('petal-canvas');
+const ctx = canvas.getContext('2d');
+let petals = [];
+let animRunning = false;
+let loveMode = false;
+ 
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+ 
+// Petal shapes
+function drawPetal(ctx, x, y, size, rotation, opacity, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.globalAlpha = opacity;
+ 
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  // Simple ellipse petal
+  ctx.ellipse(0, 0, size * 0.5, size, 0, 0, Math.PI * 2);
+  ctx.fill();
+ 
+  // Highlight
+  ctx.beginPath();
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.ellipse(-size * 0.1, -size * 0.2, size * 0.2, size * 0.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+ 
+  ctx.restore();
+}
+ 
+const petalColors = [
+  '#FFB6C8', '#FF85A1', '#FFC2D1', '#FF69B4',
+  '#FFD6E4', '#FF8FAB', '#FFA0B4', '#FFCCD9',
+  '#F48FB1', '#FCB8CD'
+];
+ 
+function spawnPetal() {
+  petals.push({
+    x: Math.random() * canvas.width,
+    y: -20,
+    size: 8 + Math.random() * 14,
+    speedY: 1.5 + Math.random() * 2.5,
+    speedX: (Math.random() - 0.5) * 1.5,
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.04,
+    opacity: 0.6 + Math.random() * 0.4,
+    color: petalColors[Math.floor(Math.random() * petalColors.length)],
+    sway: Math.random() * Math.PI * 2,
+    swaySpeed: 0.02 + Math.random() * 0.02,
+    swayAmt: 0.5 + Math.random() * 1.5,
+  });
+}
+ 
+function animPetals() {
+  if (!animRunning) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+ 
+  // Spawn new petals
+  if (petals.length < 120) spawnPetal();
+ 
+  petals = petals.filter(p => p.y < canvas.height + 30);
+ 
+  petals.forEach(p => {
+    p.y += p.speedY;
+    p.sway += p.swaySpeed;
+    p.x += p.speedX + Math.sin(p.sway) * p.swayAmt;
+    p.rotation += p.rotSpeed;
+    drawPetal(ctx, p.x, p.y, p.size, p.rotation, p.opacity, p.color);
+  });
+ 
+  requestAnimationFrame(animPetals);
+}
+ 
+// ══════════════════════════════════════════
+// CLICK HANDLER
+// ══════════════════════════════════════════
+document.getElementById('diagramCard').addEventListener('click', function() {
+  if (loveMode) return;
+  loveMode = true;
+ 
+  // Love mode
+  document.body.classList.add('love');
+ 
+  // Change web lines color
+  const webLines = document.getElementById('web-lines');
+  if (webLines) {
+    webLines.setAttribute('stroke', '#FFB6C8');
+  }
+  const spokes = document.getElementById('spokes');
+  if (spokes) {
+    spokes.setAttribute('stroke', '#F48FB1');
+    spokes.querySelectorAll('line').forEach(l => l.setAttribute('stroke', '#F48FB1'));
+  }
+ 
+  // Start petals
+  canvas.classList.add('active');
+  animRunning = true;
+  animPetals();
+ 
+  // Show love message after short delay
+  setTimeout(() => {
+    const msg = document.getElementById('loveMsg');
+    msg.classList.add('show');
+  }, 600);
+ 
+  // Hide love message after 4s
+  setTimeout(() => {
+    const msg = document.getElementById('loveMsg');
+    msg.classList.remove('show');
+  }, 4200);
+});
+</script>
+</body>
+</html>
